@@ -90,6 +90,11 @@ function handleClose() {
             v-if="currentSettings === 'all'"
             class="admincomponentsettings-settings-items"
           >
+            <label>City*</label>
+            <select v-model="currentComponent.city" required disabled>
+              <option value="taipei">臺北市</option>
+              <option value="metrotaipei">雙北</option>
+            </select>
             <label>組件名稱* ({{
               currentComponent.name.length
             }}/10)</label>

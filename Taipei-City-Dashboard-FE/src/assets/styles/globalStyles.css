@@ -165,7 +165,7 @@ td:last-child {
 	}
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 640px) {
 	.hide-if-mobile {
 		display: none !important;
 	}

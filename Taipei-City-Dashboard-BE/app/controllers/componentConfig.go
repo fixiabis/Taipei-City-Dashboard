@@ -2,12 +2,14 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"TaipeiCityDashboardBE/app/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 /*
@@ -28,7 +30,7 @@ GET /api/v1/component
 */
 
 type componentQuery struct {
-	City		  string `form:"city"`
+	City          string `form:"city"`
 	PageSize      int    `form:"pagesize"`
 	PageNum       int    `form:"pagenum"`
 	Sort          string `form:"sort"`
@@ -40,23 +42,43 @@ type componentQuery struct {
 	SearchByName  string `form:"searchbyname"`
 }
 
+type componentPayload struct {
+	Index          string                `json:"index"`
+	Name           string                `json:"name"`
+	City           string                `json:"city"`
+	HistoryConfig  json.RawMessage       `json:"history_config"`
+	MapFilter      json.RawMessage       `json:"map_filter"`
+	TimeFrom       string                `json:"time_from"`
+	TimeTo         *string               `json:"time_to"`
+	UpdateFreq     *int64                `json:"update_freq"`
+	UpdateFreqUnit string                `json:"update_freq_unit"`
+	Source         string                `json:"source"`
+	ShortDesc      string                `json:"short_desc"`
+	LongDesc       string                `json:"long_desc"`
+	UseCase        string                `json:"use_case"`
+	Links          pq.StringArray        `json:"links"`
+	Contributors   pq.StringArray        `json:"contributors"`
+	QueryType      string                `json:"query_type"`
+	ChartConfig    models.ComponentChart `json:"chart_config"`
+}
+
 // FIXME:
 // 這邊的 component 是半成品，無法直接使用
 // 缺少 components.index(component_charts.index)，後續需要設計流程補上
 func CreateComponent(c *gin.Context) {
-	var component models.Component
-	var queryChart models.QueryCharts
 	var cityComponent models.CityComponent
+	var componentPayload componentPayload
 
 	// 1. Bind the request body to the component and make sure it's valid
-	err := c.ShouldBindJSON(&component)
+	err := c.ShouldBindJSON(&componentPayload)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
 		return
 	}
 
 	// 2. Create the component
-	cityComponent, err = models.CreateComponent(component.Index, component.Name, queryChart.City, queryChart.HistoryConfig, queryChart.MapFilter, queryChart.TimeFrom, queryChart.TimeTo, queryChart.UpdateFreq, queryChart.UpdateFreqUnit, queryChart.Source, queryChart.ShortDesc, queryChart.LongDesc, queryChart.UseCase, queryChart.Links, queryChart.Contributors)
+	cityComponent, err = models.CreateComponent(componentPayload.Index, componentPayload.Name, componentPayload.City, componentPayload.HistoryConfig, componentPayload.MapFilter, componentPayload.TimeFrom, componentPayload.TimeTo, componentPayload.UpdateFreq, componentPayload.UpdateFreqUnit, componentPayload.Source, componentPayload.ShortDesc, componentPayload.LongDesc, componentPayload.UseCase, componentPayload.Links, componentPayload.Contributors, componentPayload.QueryType, componentPayload.ChartConfig)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 		return
@@ -71,7 +93,7 @@ func GetAllComponents(c *gin.Context) {
 	var query componentQuery
 	c.ShouldBindQuery(&query)
 
-	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == ""){
+	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid City Name"})
 		return
 	}
@@ -101,12 +123,12 @@ func GetComponentByID(c *gin.Context) {
 	// 1.1 Get the city name from the URL
 	var query componentQuery
 	c.ShouldBindQuery(&query)
-	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == ""){
+	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid City Name"})
 		return
 	}
 
-	if query.City == ""{
+	if query.City == "" {
 		query.City = "taipei"
 	}
 
@@ -161,12 +183,12 @@ func UpdateComponent(c *gin.Context) {
 	// 1.1 Get the city name from the URL
 	var query componentQuery
 	c.ShouldBindQuery(&query)
-	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == ""){
+	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid City Name"})
 		return
 	}
 
-	if query.City == ""{
+	if query.City == "" {
 		query.City = "taipei"
 	}
 
@@ -211,12 +233,12 @@ func UpdateComponentChartConfig(c *gin.Context) {
 
 	// 1.1 Get the city name from the URL
 	city := c.Param("city")
-	if !(city == "taipei" || city == "metrotaipei" || city == ""){
+	if !(city == "taipei" || city == "metrotaipei" || city == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid City Name"})
 		return
 	}
 
-	if city == ""{
+	if city == "" {
 		city = "taipei"
 	}
 
@@ -296,12 +318,12 @@ func DeleteComponent(c *gin.Context) {
 
 	// 1.1 Get the city name from the URL
 	city := c.Param("city")
-	if !(city == "taipei" || city == "metrotaipei" || city == ""){
+	if !(city == "taipei" || city == "metrotaipei" || city == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid City Name"})
 		return
 	}
 
-	if city == ""{
+	if city == "" {
 		city = "taipei"
 	}
 
