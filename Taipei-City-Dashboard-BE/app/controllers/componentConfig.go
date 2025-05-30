@@ -232,18 +232,19 @@ func UpdateComponentChartConfig(c *gin.Context) {
 	}
 
 	// 1.1 Get the city name from the URL
-	city := c.Param("city")
-	if !(city == "taipei" || city == "metrotaipei" || city == "") {
+	var query componentQuery
+	c.ShouldBindQuery(&query)
+	if !(query.City == "taipei" || query.City == "metrotaipei" || query.City == "") {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid City Name"})
 		return
 	}
 
-	if city == "" {
-		city = "taipei"
+	if query.City == "" {
+		query.City = "taipei"
 	}
 
 	// 2. Find the component and chart config
-	component, err := models.GetComponentByID(id, city)
+	component, err := models.GetComponentByID(id, query.City)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "component not found"})
 		return
